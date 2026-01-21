@@ -38,6 +38,7 @@ CREATE TABLE facturas (
 		CONSTRAINT PK_facturas PRIMARY KEY (factura_no),
 		CONSTRAINT FK_facturas_compradores FOREIGN KEY (CIF_cliente)
 		REFERENCES compradores (CIF_comprador),
+		CONSTRAINT CK_cod_oficina
 		CHECK (cod_oficina BETWEEN 1 AND 1000)
 );
 

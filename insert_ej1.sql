@@ -31,13 +31,19 @@ INSERT INTO facturas(factura_no,fecha_factura,CIF_cliente,cod_oficina)
 	VALUES (4,'2004-08-10','222222-J',1231);
 	
 INSERT INTO lineas_factura(factura_no,referencia_articulo,unidades)
-	VALUE (1,'01-LANA',120);
+	VALUES (1,'01-LANA',120);
 
 INSERT INTO lineas_factura(factura_no,referencia_articulo,unidades)
-	VALUE (1,'04-LINO',75);
+	VALUES (1,'04-LINO',75);
 	
 INSERT INTO lineas_factura(factura_no,referencia_articulo,unidades)
-	VALUE (2,'01-LANA',20);
+	VALUES (2,'01-LANA',20);
 
 INSERT INTO lineas_factura(factura_no,referencia_articulo,unidades)
-	VALUE (2,'02-ALGODÓN',50);
+	VALUES (2,'02-ALGODÓN',50);
+	
+INSERT INTO articulos(referencia_articulo,precio_unidad,IVA)
+	VALUES ('06-CUERO',10.99,10);
+	
+SELECT * FROM articulos;
+-- En la fila nuevamente introducida, la de 06-CUERO, la descripción es "null" y las existencias son predeterminadas a 0 --

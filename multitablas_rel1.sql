@@ -37,17 +37,28 @@ GROUP BY e.apellido;
 algún empleado de la empresa, indicando de cuantos empleados son jefes. 
 */
 
-SELECT apellido, COUNT(*) AS "Nº empleados"
+SELECT e1.apellido, COUNT(*) AS "Nº empleados"
 FROM empleados e1, empleados e2 
-WHERE dep_no = 30
-AND e1.emp_no = e.director 
-GROUP BY e.apellido;
+WHERE e1.dep_no = 30
+AND e1.emp_no = e2.director 
+GROUP BY e1.apellido;
 
 /* 5. Realizar un listado de los empleados cuyo oficio es EMPLEADO, que incluirá los
 números de empleado, los apellido y los salarios anuales, sabiendo que el salario
 anual es el salario multiplicado por 14, e incluyendo en este listado el nombre del
 director del empleado. */
 
+SELECT e1.emp_no,e1.apellido,SUM(e1.salario*14) AS "salario anual", e2.apellido
+FROM empleados e1, empleados e2
+WHERE e1.oficio = 'EMPLEADO'
+AND e1.director = e2.emp_no
+GROUP BY e1.emp_no,e2.apellido;
+
+
 /* 6. Visualizar los productos con el número total de pedidos, las unidades totales
 vendidas, y el precio unidad de cada uno de ellos incluyendo los que no tiene n
 pedidos (en este caso se mostrará un 0 en el total unidades vendidas) */
+
+SELECT p1.descripcion,COUNT(p2.pedido_no) AS "Nº pedidos", SUM(IFNULL(p2.unidades, 0)) AS "Unidades Totales", p1.precio_actual
+FROM productos p1 LEFT JOIN pedidos p2 ON p1.producto_no = p2.producto_no
+GROUP BY p1.producto_no, p1.descripcion, p1.precio_actual;

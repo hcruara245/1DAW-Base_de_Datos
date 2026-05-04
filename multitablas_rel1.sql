@@ -1,11 +1,14 @@
+USE curso;
+
 /* 
 1. Obtener una lista de los pedidos con la descripción del producto y el nombre del
 cliente clasificados por el número del cliente. 
 */
 
-SELECT descripcion, cliente_no
-FROM pedidos, productos
+SELECT descripcion,nombre
+FROM pedidos, productos, clientes
 WHERE pedidos.producto_no = productos.producto_no
+AND pedidos.cliente_no = clientes.cliente_no
 ORDER BY 2 ASC;
 
 /* 

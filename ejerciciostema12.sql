@@ -192,4 +192,119 @@ VALUES (999, 101, '2023-10-25');
 
 SELECT * FROM auditoria_pedidos;
 
-/* 2 - Control de Salario*/
+/* 2 - Control de Salario */
+DELIMITER $$
+CREATE TRIGGER tr_control_salario
+BEFORE INSERT ON empleados
+FOR EACH ROW
+BEGIN
+    IF NEW.salario < 0 THEN
+        SET NEW.salario = 0;
+    END IF;
+END $$
+DELIMITER ;
+
+INSERT INTO empleados (emp_no, apellido, salario, dep_no) 
+VALUES (8000, 'GARCIA', -500, 10);
+
+SELECT apellido, salario 
+FROM empleados 
+WHERE emp_no = 8000;
+-- Resultado: Salario aparecerá como 0.
+
+
+/* 3 - Seguridad en Borrado */
+DELIMITER $$
+CREATE TRIGGER tr_seguridad_borrado_dep
+BEFORE DELETE ON departamentos
+FOR EACH ROW
+BEGIN
+    IF OLD.dep_no = 10 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Error: No se permite borrar el departamento 10 (Contabilidad)';
+    END IF;
+END $$
+DELIMITER ;
+
+DELETE FROM departamentos WHERE dep_no = 10;
+-- Resultado: Debería saltar el error "Error: No se permite borrar el departamento 10..."
+
+
+/* 4 - Actualización de Stock */
+-- Suponiendo que la tabla pedidos tiene las columnas 'producto_no' y 'unidades'
+
+DELIMITER $$
+CREATE TRIGGER tr_actualizar_stock
+AFTER INSERT ON pedidos
+FOR EACH ROW
+BEGIN
+    UPDATE productos 
+    SET stock_disponible = stock_disponible - NEW.unidades
+    WHERE producto_no = NEW.producto_no;
+END $$
+DELIMITER ;
+
+-- Consultamos stock actual del producto 6767
+SELECT stock_disponible FROM productos WHERE producto_no = 6767;
+
+-- Insertamos un pedido de 5 unidades (ajusta los nombres de columna si varían en tu tabla)
+INSERT INTO pedidos (pedido_no, producto_no, unidades, fecha_pedido) 
+VALUES (1067, 6767, 5, NOW());
+
+-- Verificamos que el stock ha bajado en 5
+SELECT stock_disponible FROM productos WHERE producto_no = 6767;
+
+/* 5 - Log de Precios */
+-- Primero creamos la tabla de histórico si no existe
+CREATE TABLE historico_precios (
+    id_hist INT AUTO_INCREMENT PRIMARY KEY,
+    producto_no INT,
+    precio_anterior FLOAT,
+    fecha_cambio DATETIME
+);
+
+DELIMITER $$
+CREATE TRIGGER tr_log_precios
+AFTER UPDATE ON productos
+FOR EACH ROW
+BEGIN
+    IF OLD.precio_actual != NEW.precio_actual THEN
+        INSERT INTO historico_precios (producto_no, precio_anterior, fecha_cambio)
+        VALUES (OLD.producto_no, OLD.precio_actual, NOW());
+    END IF;
+END $$
+DELIMITER ;
+
+UPDATE productos SET precio_actual = 120.00 WHERE producto_no = 6767;
+
+SELECT * FROM historico_precios;
+-- Resultado: Verás una fila con el precio que tenía antes del UPDATE.
+
+
+/* 6 - Permisos y usuarios */
+
+/* 1 - Crear Vendedor */
+-- Borramos el usuario si ya existe para evitar errores al re-ejecutar
+DROP USER IF EXISTS 'vendedor1'@'localhost';
+CREATE USER 'vendedor1'@'localhost' IDENTIFIED BY 'ventas2024';
+
+/* 2 - Permiso de Lectura */
+GRANT SELECT ON curso.productos TO 'vendedor1'@'localhost';
+GRANT SELECT ON curso.pedidos TO 'vendedor1'@'localhost';
+
+/* 3 - Permiso de Escritura */
+-- Otorgamos INSERT pero no DELETE sobre la tabla clientes
+GRANT INSERT ON curso.clientes TO 'vendedor1'@'localhost';
+
+/* 4 - Revocar Permisos (Acceso parcial a Empleados) */
+-- En lugar de dar todo y quitar, damos SELECT solo a las columnas permitidas.
+-- Esto excluye 'salario' de forma efectiva.
+GRANT SELECT (emp_no, apellido, oficio, director, fecha_alta, comision, dep_no) 
+ON curso.empleados 
+TO 'vendedor1'@'localhost';
+
+/* 5 - Verificar */
+SHOW GRANTS FOR 'vendedor1'@'localhost';
+
+-- Aplicar cambios
+FLUSH PRIVILEGES;
